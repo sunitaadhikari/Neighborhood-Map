@@ -1,0 +1,31 @@
+<html>
+<head>
+    <script type="text/javascript" src="js/knockout-3.3.0.js"></script>
+    <script type="text/javascript" src="js/app.js" defer="defer"></script>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+        html, body, #map-canvas {
+            height: 100%;
+        }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+</head>
+<body>
+    <h2 style="text-align: center;">I Love New York !</h2>
+    <div>
+        <label>Filter</label>
+        <input type="text" data-bind="value: placeNameFilter, valueUpdate: 'afterkeydown'" />
+        <ul data-bind="foreach: filteredPlaceNameArray">
+            <li data-bind="click: $parent.setPlace, text: name"></li>
+        </ul>
+    </div>
+    <div style="position: relative;float: right; clear:left;">
+        <h3 data-bind="text: currentPlace().details"></h3>
+        <div>
+            <img src="" data-bind="attr: {src: currentPlace().streetViewUrl}"/>
+        </div>
+    </div>
+    <div style="position: relative;float: left; clear: right; width: 57%; margin-top: -400px;" id="map-canvas"></div>
+</body>
+</html>
