@@ -29,13 +29,15 @@ function FavoritePlacesViewModel(){
 
     /** Initializing google map **/
     self.init = function(){
-        for(var i = 0; i < self.places().length; i++){
+        var totalPlaces = self.places().length;
+        for(var i = 0; i < totalPlaces; i++){
             google.maps.event.addListener(self.places()[i].mapMarker(), 'click', (function(place){
                 return function() {
                     self.currentPlace(place);
                     self.mapInfoWindow.setContent(place.name);
                     self.mapInfoWindow.open(self.map, place.mapMarker());
-                }
+                    self.loadWikiArticle(place.name);
+                };
             })(self.places()[i]));
         }
 
@@ -63,15 +65,14 @@ function FavoritePlacesViewModel(){
     /** As the user starts typing in a specific place in the filter textfield, we will start filtering both the list view as well as the markers on the map. **/
     self.filteredPlaceNameArray = ko.computed(function(){
         var filteredArray = ko.utils.arrayFilter(self.places(), function(rec){
-            return (
-                (self.placeNameFilter().length == 0 || rec.name.toLowerCase().indexOf(self.placeNameFilter().toLowerCase()) > -1)
-             )
+            return(self.placeNameFilter().length === 0 || rec.name.toLowerCase().indexOf(self.placeNameFilter().toLowerCase()) > -1);
         });
 
         /** Hiding all the map markers from the original list of places **/
-        for(var i=0; i<self.places().length; i++){
-            self.places()[i].mapMarker().setMap(null);
-        }
+
+        self.places().forEach(function(place){
+            place.mapMarker().setMap(null);
+        });
 
         /** Displaying the marker in the filtered list **/
         filteredArray.forEach(function(place){
@@ -84,9 +85,36 @@ function FavoritePlacesViewModel(){
     self.setPlace = function(){
         /** this function is called when user clicks on the list of places. In addition to updating the currentPlace observable, it will also display the place name over the pin and center it towards the screen. **/
         self.currentPlace(this);
+        self.loadWikiArticle(this.name);
         self.mapInfoWindow.setContent(this.name);
         self.mapInfoWindow.open(self.map, this.mapMarker());
         self.map.setCenter(new google.maps.LatLng(this.address.lattitude, this.address.longitude));
+    };
+
+    self.loadWikiArticle = function(landmark){
+        var $wikiArticle = $('#wikipedia-article');
+        //clear out old data before new request
+        $wikiArticle.text("");
+        //load wikipedia data
+        var wikiUrl = 'http://en.wikipedia.org/w/api.php?action=opensearch&search=' + landmark + '&format=json&callback=wikiCallback';
+        var wikiRequestTimeout = setTimeout(function(){
+                $wikiArticle.text("failed to get wikipedia resources");
+        }, 3000);
+
+        $.ajax({
+            url: wikiUrl,
+            dataType: "jsonp",
+            jsonp: "callback",
+            success: function( response ) {
+                var articleList = response[2];
+                $wikiArticle.text(articleList[0]);
+                clearTimeout(wikiRequestTimeout);
+            },
+            error: function(error){
+                $wikiArticle.text("failed to get wikipedia resources");
+            }
+        });
+
     };
 }
 
